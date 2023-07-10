@@ -35,6 +35,7 @@ func main() {
 
 		// Capture the first row of the csv.  This is used to grab the field names
 		reader := csv.NewReader(file)
+		// reader.ReuseRecord = true     // This saves on memory allocation
 		header, err := reader.Read()
 		if err != nil {
 			fmt.Println(err)
