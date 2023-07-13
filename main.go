@@ -4,6 +4,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"sort"
 	"strconv"
@@ -13,40 +14,31 @@ import (
 	"gonum.org/v1/gonum/stat"
 )
 
-func main() {
-	N := 100
-
-	// Create the file that will be populated with the output
-	outfile, err := os.Create("housesOutputGo.txt")
+func run(inputFile, outputFile string, N int) error {
+	outfile, err := os.Create(outputFile)
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return err
 	}
 	defer outfile.Close()
 
 	for i := 0; i < N; i++ {
-
-		// Open the file
-		file, err := os.Open("housesInput.csv")
+		file, err := os.Open(inputFile)
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
-		// Capture the first row of the csv.  This is used to grab the field names
 		reader := csv.NewReader(file)
-		// reader.ReuseRecord = true     // This saves on memory allocation
 		header, err := reader.Read()
 		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
+			return err
 		}
 
-		// Create a map of the columns.  This will be used to store the data
 		columns := make(map[string][]float64)
 		for _, field := range header {
 			columns[field] = []float64{}
 		}
+
+		reader.ReuseRecord = true // This saves on memory allocation
 
 		for {
 			record, err := reader.Read()
@@ -54,15 +46,13 @@ func main() {
 				break
 			}
 			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
+				return err
 			}
 
 			for j, val := range record {
 				value, err := strconv.ParseFloat(val, 64)
 				if err != nil {
-					fmt.Println(err)
-					os.Exit(1)
+					return err
 				}
 				columns[header[j]] = append(columns[header[j]], value)
 			}
@@ -101,5 +91,19 @@ func main() {
 			}
 			fmt.Fprintln(outfile)
 		}
+	}
+
+	return nil
+}
+
+func main() {
+	if len(os.Args) < 2 {
+		log.Fatal("Please provide the input file name as a command-line argument.")
+	}
+	inputFile := os.Args[1]
+
+	if err := run(inputFile, "housesOutputGo.txt", 100); err != nil {
+		fmt.Println(err)
+		os.Exit(1)
 	}
 }
